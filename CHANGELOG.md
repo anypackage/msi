@@ -16,5 +16,5 @@ and this project adheres to [Semantic Versioning][semver].
 
 - Initial release
 
-[Unreleased]: https://github.com/anypackage/nuget/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/anypackage/nuget/releases/tag/v0.1.0
+[Unreleased]: https://github.com/anypackage/msi/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/anypackage/msi/releases/tag/v0.1.0
