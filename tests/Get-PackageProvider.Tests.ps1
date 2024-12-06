@@ -1,4 +1,4 @@
-#Requires -Modules AnyPackage.NuGet
+#Requires -Modules AnyPackage.Msi
 
 Describe Get-PackageProvider {
     Context 'without parameters' {
