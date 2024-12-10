@@ -29,6 +29,14 @@ public class MsiProvider : PackageProvider, IFindPackage, IGetPackage
 
     public void GetPackage(PackageRequest request)
     {
+        foreach (var package in GetPackageImpl(request))
+        {
+            request.WritePackage(package);
+        }
+    }
+
+    private IEnumerable<PackageInfo> GetPackageImpl(PackageRequest request)
+    {
         using var powershell = PowerShell.Create(RunspaceMode.CurrentRunspace);
         powershell.AddCommand("Get-Package")
                   .AddParameter("Name", request.Name)
@@ -62,15 +70,13 @@ public class MsiProvider : PackageProvider, IFindPackage, IGetPackage
                 source = null;
             }
 
-            var package = new PackageInfo(result.Name,
+            yield return new PackageInfo(result.Name,
                                           result.Version,
                                           source,
                                           result.Description,
                                           dependencies: null,
                                           result.Metadata.ToDictionary(x => x.Key, x => x.Value),
                                           ProviderInfo);
-
-            request.WritePackage(package);
         }
     }
 
