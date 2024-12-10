@@ -4,6 +4,7 @@
     "Authenticode",
     "netstandard",
     "Nieto",
-    "runneradmin"
+    "runneradmin",
+    "Runspace"
   ]
 }

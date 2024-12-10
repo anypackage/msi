@@ -2,12 +2,14 @@
 // You may use, distribute and modify this code under the
 // terms of the MIT license.
 
+using System.Management.Automation;
+
 using WixToolset.Dtf.WindowsInstaller;
 
 namespace AnyPackage.Provider.Msi;
 
 [PackageProvider("Msi", PackageByName = false, FileExtensions = [".msi", ".msp"])]
-public class MsiProvider : PackageProvider, IFindPackage
+public class MsiProvider : PackageProvider, IFindPackage, IGetPackage
 {
     public void FindPackage(PackageRequest request)
     {
@@ -23,6 +25,53 @@ public class MsiProvider : PackageProvider, IFindPackage
         }
 
         request.WritePackage(package);
+    }
+
+    public void GetPackage(PackageRequest request)
+    {
+        using var powershell = PowerShell.Create(RunspaceMode.CurrentRunspace);
+        powershell.AddCommand("Get-Package")
+                  .AddParameter("Name", request.Name)
+                  .AddParameter("Provider", @"AnyPackage.Programs\Programs");
+
+        if (request.Version is not null)
+        {
+            powershell.AddParameter("Version", request.Version);
+        }
+
+        if (request.DynamicParameters is GetPackageDynamicParameters dynamicParameters
+            && dynamicParameters.SystemComponent)
+        {
+            powershell.AddParameter("SystemComponent");
+        }
+
+        var scriptBlock = ScriptBlock.Create("$_.Metadata['UninstallString'] -like 'MsiExec.exe*' ");
+
+        powershell.AddCommand("Where-Object")
+                  .AddParameter("FilterScript", scriptBlock);
+
+        foreach (var result in powershell.Invoke<PackageInfo>())
+        {
+            PackageSourceInfo? source;
+            if (result.Source is not null)
+            {
+                source = new PackageSourceInfo(result.Source.Name, result.Source.Location, ProviderInfo);
+            }
+            else
+            {
+                source = null;
+            }
+
+            var package = new PackageInfo(result.Name,
+                                          result.Version,
+                                          source,
+                                          result.Description,
+                                          dependencies: null,
+                                          result.Metadata.ToDictionary(x => x.Key, x => x.Value),
+                                          ProviderInfo);
+
+            request.WritePackage(package);
+        }
     }
 
     private PackageInfo FindPackageMsi(PackageRequest request)
@@ -57,6 +106,15 @@ public class MsiProvider : PackageProvider, IFindPackage
                                       ProviderInfo);
 
         return package;
+    }
+
+    protected override object? GetDynamicParameters(string commandName)
+    {
+        return commandName switch
+        {
+            "Get-Package" => new GetPackageDynamicParameters(),
+            _ => null,
+        };
     }
 
     private static Dictionary<string, object?> GetMetadataMsi(Database database)
