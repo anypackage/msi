@@ -8,7 +8,8 @@
     Description = 'Msi provider for AnyPackage.'
     PowerShellVersion = '5.1'
     RequiredModules = @(
-        @{ ModuleName = 'AnyPackage'; ModuleVersion = '0.8.0' })
+        @{ ModuleName = 'AnyPackage'; ModuleVersion = '0.8.0' }
+        'AnyPackage.Programs')
     FunctionsToExport = @()
     CmdletsToExport = @()
     AliasesToExport = @()
