@@ -49,8 +49,8 @@ jobs:
           name: module
           path: C:\Users\runneradmin\Documents\PowerShell\Modules\AnyPackage.Msi\
 
-      - name: Install AnyPackage module
-        run: Install-Module AnyPackage -Force -AllowClobber
+      - name: Install AnyPackage.Programs module
+        run: Install-Module AnyPackage.Programs -Force -AllowClobber
 
       - name: Test with Pester
         run: |
@@ -117,8 +117,8 @@ jobs:
           name: module-signed
           path: '~/.local/share/powershell/Modules/AnyPackage.Msi'
 
-      - name: Install AnyPackage module
-        run: Install-Module AnyPackage -Force -AllowClobber
+      - name: Install AnyPackage.Programs module
+        run: Install-Module AnyPackage.Programs -Force -AllowClobber
 
       - name: Publish Module
         env:
