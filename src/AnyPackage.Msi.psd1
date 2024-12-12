@@ -7,9 +7,7 @@
     Copyright = '(c) 2024 Thomas Nieto. All rights reserved.'
     Description = 'Msi provider for AnyPackage.'
     PowerShellVersion = '5.1'
-    RequiredModules = @(
-        @{ ModuleName = 'AnyPackage'; ModuleVersion = '0.8.0' }
-        'AnyPackage.Programs')
+    RequiredModules = @(@{ ModuleName = 'AnyPackage'; ModuleVersion = '0.8.0' })
     FunctionsToExport = @()
     CmdletsToExport = @()
     AliasesToExport = @()
