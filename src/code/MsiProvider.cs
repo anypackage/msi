@@ -27,16 +27,36 @@ public class MsiProvider : PackageProvider, IFindPackage, IGetPackage
 
     public void GetPackage(PackageRequest request)
     {
-        foreach (var package in GetPackages())
+        var installType = InstallType.All;
+        if (request.DynamicParameters is GetPackageDynamicParameters dynamicParameters)
         {
-            if (request.IsMatch(package.Name, package.Version!))
+            installType = dynamicParameters.InstallType;
+        }
+
+        if (installType.HasFlag(InstallType.Product))
+        {
+            foreach (var package in GetProductPackages())
             {
-                request.WritePackage(package);
+                if (request.IsMatch(package.Name, package.Version!))
+                {
+                    request.WritePackage(package);
+                }
+            }
+        }
+
+        if (installType.HasFlag(InstallType.Patch))
+        {
+            foreach (var package in GetPatchPackages())
+            {
+                if (!request.IsVersionFiltered && request.IsMatch(package.Name))
+                {
+                    request.WritePackage(package);
+                }
             }
         }
     }
 
-    private IEnumerable<PackageInfo> GetPackages()
+    private IEnumerable<PackageInfo> GetProductPackages()
     {
         foreach (var product in ProductInstallation.AllProducts)
         {
@@ -77,7 +97,8 @@ public class MsiProvider : PackageProvider, IFindPackage, IGetPackage
                 { "AdvertisedPackageName", product.AdvertisedPackageName },
                 { "PrivilegedPatchingAuthorized", product.PrivilegedPatchingAuthorized },
                 { "UserSid", product.UserSid },
-                { "Context", product.Context }
+                { "Context", product.Context },
+                { "InstallType", InstallType.Product }
             };
 
             var source = new PackageSourceInfo(product.LocalPackage,
@@ -86,6 +107,43 @@ public class MsiProvider : PackageProvider, IFindPackage, IGetPackage
 
             yield return new PackageInfo(product.ProductName,
                                          product.ProductVersion,
+                                         source,
+                                         description: "",
+                                         dependencies: null,
+                                         metadata,
+                                         ProviderInfo);
+        }
+    }
+
+    private IEnumerable<PackageInfo> GetPatchPackages()
+    {
+        foreach (var patch in PatchInstallation.AllPatches)
+        {
+            var metadata = new Dictionary<string, object?>
+            {
+                { "Context", patch.Context },
+                { "InstallDate", patch.InstallDate },
+                { "IsInstalled", patch.IsInstalled },
+                { "IsObsoleted", patch.IsObsoleted },
+                { "IsSuperseded", patch.IsSuperseded },
+                { "LocalPackage", patch.LocalPackage },
+                { "MoreInfoUrl", patch.MoreInfoUrl },
+                { "PatchCode", patch.PatchCode },
+                { "ProductCode", patch.ProductCode },
+                { "SourceList", patch.SourceList },
+                { "State", patch.State },
+                { "Transforms", patch.Transforms },
+                { "Uninstallable", patch.Uninstallable },
+                { "UserSid", patch.UserSid },
+                { "InstallType", InstallType.Patch }
+            };
+
+            var source = new PackageSourceInfo(patch.LocalPackage,
+                                               patch.LocalPackage,
+                                               ProviderInfo);
+
+            yield return new PackageInfo(patch.DisplayName,
+                                         version: null,
                                          source,
                                          description: "",
                                          dependencies: null,

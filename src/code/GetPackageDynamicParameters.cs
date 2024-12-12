@@ -9,5 +9,5 @@ namespace AnyPackage.Provider.Msi;
 public class GetPackageDynamicParameters
 {
     [Parameter]
-    public SwitchParameter SystemComponent { get; set; }
+    public InstallType InstallType { get; set; } = InstallType.All;
 }
