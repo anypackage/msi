@@ -38,7 +38,7 @@ public class MsiProvider : PackageProvider, IFindPackage, IGetPackage
 
     private IEnumerable<PackageInfo> GetPackages()
     {
-        foreach (ProductInstallation? product in ProductInstallation.AllProducts)
+        foreach (var product in ProductInstallation.AllProducts)
         {
             if (string.IsNullOrWhiteSpace(product.ProductName))
             {
