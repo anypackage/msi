@@ -55,10 +55,10 @@ Get-Package
 
 ```powershell
 # MSI Files
-Get-Package -Provider Msi -InstallerType Product
+Get-Package -Provider Msi -InstallType Product
 
 # MSP Files
-Get-Package -Provider Msi -InstallerType Patch
+Get-Package -Provider Msi -InstallType Patch
 ```
 
 ### Uninstall packages
