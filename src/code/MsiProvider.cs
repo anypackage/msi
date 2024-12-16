@@ -7,7 +7,7 @@ using WixToolset.Dtf.WindowsInstaller;
 namespace AnyPackage.Provider.Msi;
 
 [PackageProvider("Msi", PackageByName = false, FileExtensions = [".msi", ".msp"])]
-public class MsiProvider : PackageProvider, IFindPackage, IGetPackage
+public class MsiProvider : PackageProvider, IFindPackage, IGetPackage, IInstallPackage
 {
     public void FindPackage(PackageRequest request)
     {
@@ -54,6 +54,94 @@ public class MsiProvider : PackageProvider, IFindPackage, IGetPackage
                 }
             }
         }
+    }
+
+    public void InstallPackage(PackageRequest request)
+    {
+        var pathExtension = Path.GetExtension(request.Path);
+        var packageExtension = Path.GetExtension(request.Package?.Source?.Location);
+        PackageInfo package;
+
+        if (pathExtension == ".msi" || packageExtension == ".msi")
+        {
+            package = InstallPackageMsi(request);
+        }
+        else
+        {
+            package = InstallPackageMsp(request);
+        }
+
+        request.WritePackage(package);
+    }
+
+    private PackageInfo InstallPackageMsi(PackageRequest request)
+    {
+        var package = request.Package ?? FindPackageMsi(request);
+
+        if (package.Source?.Location is null)
+        {
+            throw new InvalidOperationException("Package does not contain path to MSI file.");
+        }
+
+        var logPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+        Installer.EnableLog(InstallLogModes.LogOnlyOnError, logPath);
+        request.WriteVerbose($"Error logging path: '{logPath}'");
+
+        var properties = "REBOOT=REALLYSUPPRESS";
+
+        if (request.DynamicParameters is InstallPackageDynamicParameters dynamicParameters)
+        {
+            properties += string.Join(" ", dynamicParameters.Properties);
+        }
+
+        request.WriteVerbose($"Properties: {properties}");
+
+        Installer.InstallProduct(package.Source.Location, properties);
+
+        // Disable logging
+        Installer.EnableLog(InstallLogModes.None, null);
+
+        if (Installer.RebootRequired)
+        {
+            request.WriteWarning("Restart computer to complete installation.");
+        }
+
+        return package;
+    }
+
+    private PackageInfo InstallPackageMsp(PackageRequest request)
+    {
+        var package = request.Package ?? FindPackageMsp(request);
+
+        if (package?.Source?.Location is null)
+        {
+            throw new InvalidOperationException("Package does not contain path to MSI file.");
+        }
+
+        var logPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+        Installer.EnableLog(InstallLogModes.LogOnlyOnError, logPath);
+        request.WriteVerbose($"Error logging path: '{logPath}'");
+
+        var properties = "REBOOT=REALLYSUPPRESS";
+
+        if (request.DynamicParameters is InstallPackageDynamicParameters dynamicParameters)
+        {
+            properties += string.Join(" ", dynamicParameters.Properties);
+        }
+
+        request.WriteVerbose($"Properties: {properties}");
+
+        Installer.ApplyPatch(package.Source.Location, properties);
+
+        // Disable logging
+        Installer.EnableLog(InstallLogModes.None, null);
+
+        if (Installer.RebootRequired)
+        {
+            request.WriteWarning("Restart computer to complete installation.");
+        }
+
+        return package;
     }
 
     private IEnumerable<PackageInfo> GetProductPackages()
@@ -191,6 +279,7 @@ public class MsiProvider : PackageProvider, IFindPackage, IGetPackage
         return commandName switch
         {
             "Get-Package" => new GetPackageDynamicParameters(),
+            "Install-Package" => new InstallPackageDynamicParameters(),
             _ => null,
         };
     }
