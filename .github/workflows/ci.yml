@@ -49,8 +49,8 @@ jobs:
           name: module
           path: C:\Users\runneradmin\Documents\PowerShell\Modules\AnyPackage.Msi\
 
-      - name: Install AnyPackage.Programs module
-        run: Install-Module AnyPackage.Programs -Force -AllowClobber
+      - name: Install AnyPackage module
+        run: Install-Module AnyPackage -Force -AllowClobber
 
       - name: Test with Pester
         run: |
@@ -117,10 +117,10 @@ jobs:
           name: module-signed
           path: '~/.local/share/powershell/Modules/AnyPackage.Msi'
 
-      - name: Install AnyPackage.Programs module
-        run: Install-Module AnyPackage.Programs -Force -AllowClobber
+      - name: Install AnyPackage module
+        run: Install-Module AnyPackage -Force -AllowClobber
 
       - name: Publish Module
         env:
           NUGET_KEY: ${{ secrets.NUGET_KEY }}
-        run: Publish-Module -Name AnyPackage.Msi -MsiApiKey $env:NUGET_KEY
+        run: Publish-Module -Name AnyPackage.Msi -NuGetApiKey $env:NUGET_KEY
