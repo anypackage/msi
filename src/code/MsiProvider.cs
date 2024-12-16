@@ -87,7 +87,7 @@ public class MsiProvider : PackageProvider, IFindPackage, IGetPackage, IInstallP
         Installer.EnableLog(InstallLogModes.LogOnlyOnError, logPath);
         request.WriteVerbose($"Error logging path: '{logPath}'");
 
-        var properties = "REBOOT=REALLYSUPPRESS";
+        var properties = "REBOOT=REALLYSUPPRESS ";
 
         if (request.DynamicParameters is InstallPackageDynamicParameters dynamicParameters)
         {
@@ -122,7 +122,7 @@ public class MsiProvider : PackageProvider, IFindPackage, IGetPackage, IInstallP
         Installer.EnableLog(InstallLogModes.LogOnlyOnError, logPath);
         request.WriteVerbose($"Error logging path: '{logPath}'");
 
-        var properties = "REBOOT=REALLYSUPPRESS";
+        var properties = "REBOOT=REALLYSUPPRESS ";
 
         if (request.DynamicParameters is InstallPackageDynamicParameters dynamicParameters)
         {
