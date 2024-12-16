@@ -32,3 +32,37 @@ Import-Module AnyPackage.Msi
 ```powershell
 Find-Package -Path C:\Temp\installer.msi
 ```
+
+### Install packages
+
+```powershell
+Install-Package -Path C:\Temp\installer.msi
+```
+
+### Install packages with custom properties
+
+```powershell
+Install-Package -Path C:\Temp\installer.msi -Provider Msi -Properties "CustomProp=1"
+```
+
+### Get installed packages
+
+```powershell
+Get-Package
+```
+
+### Get installed packages and specify type
+
+```powershell
+# MSI Files
+Get-Package -Provider Msi -InstallerType Product
+
+# MSP Files
+Get-Package -Provider Msi -InstallerType Patch
+```
+
+### Uninstall packages
+
+```powershell
+Uninstall-Package -Name neovim
+```
