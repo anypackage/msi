@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning][semver].
 
 ## [Unreleased]
 
-## [0.1.0] - xxxx-xx-xx
+## [0.1.0] - 2024-12-15
 
 ### Added
 
