@@ -2,12 +2,14 @@
 // You may use, distribute and modify this code under the
 // terms of the MIT license.
 
+using System.Management.Automation;
+
 using WixToolset.Dtf.WindowsInstaller;
 
 namespace AnyPackage.Provider.Msi;
 
 [PackageProvider("Msi", PackageByName = false, FileExtensions = [".msi", ".msp"])]
-public class MsiProvider : PackageProvider, IFindPackage, IGetPackage, IInstallPackage
+public class MsiProvider : PackageProvider, IFindPackage, IGetPackage, IInstallPackage, IUninstallPackage
 {
     public void FindPackage(PackageRequest request)
     {
@@ -72,6 +74,81 @@ public class MsiProvider : PackageProvider, IFindPackage, IGetPackage, IInstallP
         }
 
         request.WritePackage(package);
+    }
+
+    public void UninstallPackage(PackageRequest request)
+    {
+        IEnumerable<PackageInfo> packages = [];
+
+        if (request.Package is null)
+        {
+            using var powershell = PowerShell.Create(RunspaceMode.CurrentRunspace);
+            powershell.AddCommand("Get-Package")
+                      .AddParameter("Name", request.Name)
+                      .AddParameter("Provider", ProviderInfo.FullName);
+
+            if (request.Version is not null)
+            {
+                powershell.AddParameter("Version", request.Version);
+            }
+
+            packages = powershell.Invoke<PackageInfo>();
+        }
+        else
+        {
+            packages = new [] { request.Package };
+        }
+
+        foreach (var package in packages)
+        {
+            if (package.Source?.Location is null)
+            {
+                var ex = new InvalidOperationException("Package does not contain path to MSI file.");
+                var err = new ErrorRecord(ex, "MissingPackagePath", ErrorCategory.ResourceUnavailable, package);
+                request.WriteError(err);
+                continue;
+            }
+
+            var extension = Path.GetExtension(package.Source.Location);
+
+            if (extension == ".msi")
+            {
+                try
+                {
+                    Installer.InstallProduct(package.Source.Location, "REMOVE=ALL");
+                    request.WritePackage(package);
+                }
+                catch (InstallerException e)
+                {
+                    var err = new ErrorRecord(e, "UninstallFailed", ErrorCategory.InvalidResult, package);
+                    request.WriteError(err);
+                }
+            }
+            else
+            {
+                if (package.Metadata.TryGetValue("ProductCode", out var productCode))
+                {
+                    if (productCode is null)
+                    {
+                        var ex = new InvalidOperationException("Patch does not contain product code.");
+                        var err = new ErrorRecord(ex, "MissingProductCode", ErrorCategory.InvalidOperation, package);
+                        request.WriteError(err);
+                        continue;
+                    }
+
+                    try
+                    {
+                        Installer.RemovePatches(new[] { package.Source.Location }, productCode.ToString(), "");
+                        request.WritePackage(package);
+                    }
+                    catch (InstallerException e)
+                    {
+                        var err = new ErrorRecord(e, "UninstallFailed", ErrorCategory.InvalidResult, package);
+                        request.WriteError(err);
+                    }
+                }
+            }
+        }
     }
 
     private PackageInfo InstallPackageMsi(PackageRequest request)
